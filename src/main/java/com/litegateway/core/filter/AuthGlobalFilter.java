@@ -2,10 +2,14 @@ package com.litegateway.core.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.litegateway.core.dto.UserDTO;
+import com.litegateway.core.manager.GatewayFeatureManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.cloud.gateway.route.Route;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -20,22 +24,47 @@ import java.util.Base64;
 import java.util.Map;
 
 /**
- * 认证全局过滤器
+ * 认证全局过滤器（可配置版）
  * 将登录用户的 JWT 转化成用户信息，转发出去的 header 增加 json-user 属性
- * 从旧项目迁移，包名从 com.jtyjy.gateway 改为 com.litegateway.core
+ * 支持动态开关
  */
 @Component
-public class AuthGlobalFilter implements GlobalFilter, Ordered {
+public class AuthGlobalFilter implements GlobalFilter, Ordered, ConfigurableFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthGlobalFilter.class);
+
+    private static final String FEATURE_CODE = "auth_jwt";
 
     private static final String USER_HEADER = "X-User-Info";
     private static final String AUTHORIZATION = "Authorization";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Autowired
+    private GatewayFeatureManager gatewayFeatureManager;
+
+    @Override
+    public String getFeatureCode() {
+        return FEATURE_CODE;
+    }
+
+    @Override
+    public int getPriority() {
+        return 30;
+    }
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        // 获取当前路由
+        Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
+        String routeId = route != null ? route.getId() : "default";
+
+        // 检查功能是否启用
+        if (!gatewayFeatureManager.isFeatureEnabled(FEATURE_CODE, routeId)) {
+            logger.debug("JWT auth is disabled for route: {}", routeId);
+            return chain.filter(exchange);
+        }
+
         String urlPath = exchange.getRequest().getPath().value();
 
         // 获取真实 IP 写入头部

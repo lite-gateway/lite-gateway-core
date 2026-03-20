@@ -11,6 +11,9 @@ public class GatewayConfigDTO {
     private List<RouteDTO> routes;
     private List<IpBlackDTO> ipBlacklist;
     private List<WhiteListDTO> whiteList;
+    private List<FeatureConfigDTO> featureConfigs;
+    private List<CircuitBreakerRuleDTO> circuitBreakerRules;
+    private List<CanaryRuleDTO> canaryRules;
 
     public Long getVersion() {
         return version;
@@ -42,5 +45,29 @@ public class GatewayConfigDTO {
 
     public void setWhiteList(List<WhiteListDTO> whiteList) {
         this.whiteList = whiteList;
+    }
+
+    public List<FeatureConfigDTO> getFeatureConfigs() {
+        return featureConfigs;
+    }
+
+    public void setFeatureConfigs(List<FeatureConfigDTO> featureConfigs) {
+        this.featureConfigs = featureConfigs;
+    }
+
+    public List<CircuitBreakerRuleDTO> getCircuitBreakerRules() {
+        return circuitBreakerRules;
+    }
+
+    public void setCircuitBreakerRules(List<CircuitBreakerRuleDTO> circuitBreakerRules) {
+        this.circuitBreakerRules = circuitBreakerRules;
+    }
+
+    public List<CanaryRuleDTO> getCanaryRules() {
+        return canaryRules;
+    }
+
+    public void setCanaryRules(List<CanaryRuleDTO> canaryRules) {
+        this.canaryRules = canaryRules;
     }
 }

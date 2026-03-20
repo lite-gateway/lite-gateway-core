@@ -21,7 +21,6 @@ import java.util.*;
  * 动态路由定义仓库
  * 从旧项目 MysqlRouteDefinitionRepository 迁移
  * 支持从内存/数据库/Nacos 加载路由配置
- * 包名从 com.jtyjy.gateway 改为 com.litegateway.core
  */
 @Component
 public class DynamicRouteDefinitionRepository implements RouteDefinitionRepository {

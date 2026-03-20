@@ -3,10 +3,8 @@ package com.litegateway.core.service;
 import com.litegateway.core.cache.IpListCache;
 import com.litegateway.core.cache.WhiteListCache;
 import com.litegateway.core.client.AdminConfigClient;
-import com.litegateway.core.dto.GatewayConfigDTO;
-import com.litegateway.core.dto.IpBlackDTO;
-import com.litegateway.core.dto.RouteDTO;
-import com.litegateway.core.dto.WhiteListDTO;
+import com.litegateway.core.dto.*;
+import com.litegateway.core.manager.GatewayFeatureManager;
 import com.litegateway.core.route.DynamicRouteDefinitionRepository;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -35,6 +33,9 @@ public class ConfigSyncService {
     @Autowired
     private DynamicRouteDefinitionRepository routeDefinitionRepository;
 
+    @Autowired
+    private GatewayFeatureManager gatewayFeatureManager;
+
     // 当前配置版本号
     private final AtomicLong currentVersion = new AtomicLong(0);
 
@@ -56,19 +57,21 @@ public class ConfigSyncService {
 
     /**
      * 强制同步配置（启动时或收到Redis通知时调用）
+     * @return 同步的配置，如果失败返回null
      */
-    public void syncConfig() {
+    public GatewayConfigDTO syncConfig() {
         logger.info("Syncing gateway config from admin...");
         GatewayConfigDTO config = adminConfigClient.getGatewayConfig();
         
         if (config == null) {
             logger.error("Failed to fetch gateway config from admin");
-            return;
+            return null;
         }
         
         applyConfig(config);
         currentVersion.set(config.getVersion());
         logger.info("Gateway config synced successfully, version: {}", config.getVersion());
+        return config;
     }
 
     /**
@@ -107,15 +110,30 @@ public class ConfigSyncService {
         if (config.getRoutes() != null) {
             syncRoutes(config.getRoutes());
         }
-        
+
         // 同步IP黑名单
         if (config.getIpBlacklist() != null) {
             syncIpBlacklist(config.getIpBlacklist());
         }
-        
+
         // 同步白名单
         if (config.getWhiteList() != null) {
             syncWhiteList(config.getWhiteList());
+        }
+
+        // 同步功能配置
+        if (config.getFeatureConfigs() != null) {
+            gatewayFeatureManager.updateFeatureConfigs(config.getFeatureConfigs());
+        }
+
+        // 同步熔断规则
+        if (config.getCircuitBreakerRules() != null) {
+            gatewayFeatureManager.updateCircuitBreakerRules(config.getCircuitBreakerRules());
+        }
+
+        // 同步灰度规则
+        if (config.getCanaryRules() != null) {
+            gatewayFeatureManager.updateCanaryRules(config.getCanaryRules());
         }
     }
 
@@ -127,7 +145,7 @@ public class ConfigSyncService {
         
         for (RouteDTO route : routes) {
             RouteDefinition definition = routeDefinitionRepository.buildRouteDefinition(
-                    route.getRouteId(),
+                    String.valueOf(route.getId()),
                     route.getUri(),
                     route.getPath(),
                     route.getStripPrefix(),

@@ -1,7 +1,6 @@
 package com.litegateway.core.controller;
 
 import com.litegateway.core.common.web.Result;
-import com.litegateway.core.dto.RouteDTO;
 import com.litegateway.core.route.DynamicRouteDefinitionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

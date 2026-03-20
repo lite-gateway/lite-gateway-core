@@ -1,205 +1,77 @@
 package com.litegateway.core.dto;
 
+import lombok.Data;
+import java.time.LocalDateTime;
+
 /**
  * 路由数据传输对象
- * 用于前后端数据传输
+ * 从旧项目迁移，包名从 com.jtyjy.gateway 改为 com.litegateway
  */
+@Data
 public class RouteDTO {
+
+    /** id */
     private Long id;
+
+    /** 系统代号 */
     private String systemCode;
+
+    /** 名称 */
     private String name;
+
+    /** 服务地址 */
     private String uri;
+
+    /** 断言地址 */
     private String path;
+
+    /** 断言截取 */
     private Integer stripPrefix;
+
+    /** 断言主机 */
     private String host;
+
+    /** 断言远程地址 */
     private String remoteAddr;
+
+    /** 断言Headers */
     private String header;
+
+    /** 限流器 */
     private String filterRateLimiterName;
+
+    /** 每秒流量 */
     private Integer replenishRate;
+
+    /** 令牌总量 */
     private Integer burstCapacity;
+
+    /** 状态，0启用，1禁用 */
     private String status;
+
+    /** 请求参数 */
     private String requestParameter;
+
+    /** 重写Path路径 */
     private String rewritePath;
+
+    /** 创建人 */
     private String createBy;
-    private String createTime;
+
+    /** 创建时间 */
+    private LocalDateTime createTime;
+
+    /** 更新人 */
     private String updateBy;
-    private String updateTime;
+
+    /** 更新时间 */
+    private LocalDateTime updateTime;
+
+    /** 权重名称（隐藏） */
     private String weightName;
+
+    /** 权重（隐藏） */
     private Integer weight;
-
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getSystemCode() {
-        return systemCode;
-    }
-
-    public void setSystemCode(String systemCode) {
-        this.systemCode = systemCode;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public Integer getStripPrefix() {
-        return stripPrefix;
-    }
-
-    public void setStripPrefix(Integer stripPrefix) {
-        this.stripPrefix = stripPrefix;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public String getRemoteAddr() {
-        return remoteAddr;
-    }
-
-    public void setRemoteAddr(String remoteAddr) {
-        this.remoteAddr = remoteAddr;
-    }
-
-    public String getHeader() {
-        return header;
-    }
-
-    public void setHeader(String header) {
-        this.header = header;
-    }
-
-    public String getFilterRateLimiterName() {
-        return filterRateLimiterName;
-    }
-
-    public void setFilterRateLimiterName(String filterRateLimiterName) {
-        this.filterRateLimiterName = filterRateLimiterName;
-    }
-
-    public Integer getReplenishRate() {
-        return replenishRate;
-    }
-
-    public void setReplenishRate(Integer replenishRate) {
-        this.replenishRate = replenishRate;
-    }
-
-    public Integer getBurstCapacity() {
-        return burstCapacity;
-    }
-
-    public void setBurstCapacity(Integer burstCapacity) {
-        this.burstCapacity = burstCapacity;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getRequestParameter() {
-        return requestParameter;
-    }
-
-    public void setRequestParameter(String requestParameter) {
-        this.requestParameter = requestParameter;
-    }
-
-    public String getRewritePath() {
-        return rewritePath;
-    }
-
-    public void setRewritePath(String rewritePath) {
-        this.rewritePath = rewritePath;
-    }
-
-    public String getCreateBy() {
-        return createBy;
-    }
-
-    public void setCreateBy(String createBy) {
-        this.createBy = createBy;
-    }
-
-    public String getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(String createTime) {
-        this.createTime = createTime;
-    }
-
-    public String getUpdateBy() {
-        return updateBy;
-    }
-
-    public void setUpdateBy(String updateBy) {
-        this.updateBy = updateBy;
-    }
-
-    public String getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(String updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    public String getWeightName() {
-        return weightName;
-    }
-
-    public void setWeightName(String weightName) {
-        this.weightName = weightName;
-    }
-
-    public Integer getWeight() {
-        return weight;
-    }
-
-    public void setWeight(Integer weight) {
-        this.weight = weight;
-    }
-
-    // 新增方法
-    public String getRouteId() {
-        return id != null ? id.toString() : null;
-    }
 
     public String getTargetProtocol() {
         return null;

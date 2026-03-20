@@ -1,4 +1,4 @@
-package com.litegateway.core.listener;
+package com.litegateway.core.listener.event;
 
 import org.springframework.context.ApplicationEvent;
 

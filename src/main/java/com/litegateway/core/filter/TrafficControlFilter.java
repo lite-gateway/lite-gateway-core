@@ -1,9 +1,13 @@
 package com.litegateway.core.filter;
 
+import com.litegateway.core.manager.GatewayFeatureManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.cloud.gateway.route.Route;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -15,23 +19,28 @@ import reactor.core.publisher.Mono;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 流量控制过滤器
+ * 流量控制过滤器（可配置版）
  * 用于控制请求的流量，比如限制并发请求数、控制请求速率等
+ * 支持动态开关
  */
 @Component
 public class TrafficControlFilter extends AbstractGatewayFilterFactory<TrafficControlFilter.Config> {
 
     private static final Logger logger = LoggerFactory.getLogger(TrafficControlFilter.class);
 
+    private static final String FEATURE_CODE = "traffic_control";
+
     // 并发请求控制
     private final Semaphore concurrencySemaphore;
     // 请求速率控制
     private final AtomicInteger requestCount = new AtomicInteger(0);
     private long lastSecondTimestamp = System.currentTimeMillis();
+
+    @Autowired
+    private GatewayFeatureManager gatewayFeatureManager;
 
     public TrafficControlFilter() {
         super(Config.class);
@@ -42,20 +51,30 @@ public class TrafficControlFilter extends AbstractGatewayFilterFactory<TrafficCo
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
+            // 获取当前路由
+            Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
+            String routeId = route != null ? route.getId() : "default";
+
+            // 检查功能是否启用
+            if (!gatewayFeatureManager.isFeatureEnabled(FEATURE_CODE, routeId)) {
+                logger.debug("Traffic control is disabled for route: {}", routeId);
+                return chain.filter(exchange);
+            }
+
             ServerHttpRequest request = exchange.getRequest();
-            
+
             // 检查并发限制
             if (!concurrencySemaphore.tryAcquire()) {
                 logger.warn("Concurrent request limit exceeded");
                 return handleTooManyRequests(exchange);
             }
-            
+
             // 检查速率限制
             if (!checkRateLimit(config.getRateLimitPerSecond())) {
                 logger.warn("Rate limit exceeded");
                 return handleTooManyRequests(exchange);
             }
-            
+
             return chain.filter(exchange).doFinally(signalType -> {
                 // 释放并发信号量
                 concurrencySemaphore.release();
@@ -65,13 +84,13 @@ public class TrafficControlFilter extends AbstractGatewayFilterFactory<TrafficCo
 
     private boolean checkRateLimit(int rateLimitPerSecond) {
         long currentTime = System.currentTimeMillis();
-        
+
         // 每秒重置计数器
         if (currentTime - lastSecondTimestamp > 1000) {
             requestCount.set(0);
             lastSecondTimestamp = currentTime;
         }
-        
+
         // 检查是否超过速率限制
         return requestCount.incrementAndGet() <= rateLimitPerSecond;
     }
@@ -80,7 +99,7 @@ public class TrafficControlFilter extends AbstractGatewayFilterFactory<TrafficCo
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
         response.getHeaders().add("Content-Type", "application/json");
-        
+
         String errorMessage = "{\"error\": \"Too Many Requests\", \"message\": \"Rate limit exceeded\"}";
         DataBuffer buffer = response.bufferFactory().wrap(errorMessage.getBytes());
         return response.writeWith(Mono.just(buffer));
